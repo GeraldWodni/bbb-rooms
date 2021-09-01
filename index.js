@@ -136,3 +136,5 @@ class BbbApi {
         return this.callUrl( "end", params );
     }
 }
+
+module.exports = BbbApi;
