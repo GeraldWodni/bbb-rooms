@@ -6,8 +6,8 @@ bigbluebutton promise api with simple persistant rooms
 
 Hint: there are no persistant rooms, once a conference is idle bbb will close it. This API however checks if the room exists, and will create it if it does not. For the user the room will therefor appear persistant.
 
-### joinPersitantRoom( joinOpts, roomOpts )
-Note: the opts are kept separate intentionally. That way this module is much more future proof.
+### joinPersitantRoom( joinOpts, createOpts )
+Note: the options are kept separate intentionally. That way this module is much more future proof.
 
 ```js
 const BbbApi = require("bbb-rooms");
@@ -45,7 +45,7 @@ bbbApi.create({
     attendeePW: "oneone",
     moderatorPW: "twotwo",
     freeJoin: true, // allow choice of breakout rooms
-    
+
     allowModsToUnmuteUsers: true,
     logoutURL: "https://euro.theforth.net",
     meetingLayout: "PRESENTATION_FOCUS",
@@ -144,7 +144,7 @@ forcefully end meeting
 bbbApi.end({
     meetingID: "euroforth",
     password: "twotwo", // provide moderator password
-}
+})
 .then( res => console.log( "RES:", res ) )
 .catch( err => console.log( "OH NOES:", err ) );
 ```

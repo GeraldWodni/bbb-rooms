@@ -6,6 +6,7 @@
 const http = require("http");
 const https = require("https");
 const crypto = require("crypto");
+const xmlParser = require("fast-xml-parser");
 
 class BbbApi {
     constructor( host, secret, opts = {} ) {
@@ -51,6 +52,7 @@ class BbbApi {
                 res.on("data", chunk => data += chunk);
                 res.on("end", () => {
                     fulfill({
+                        headers: res.headers,
                         statusCode: res.statusCode,
                         body: data,
                     });
@@ -58,7 +60,8 @@ class BbbApi {
             })
             req.on("error", reject);
             req.end();
-        });
+        })
+        .then( this.processResponse.bind( this ) );
     }
 
     callUrl( call, params = {} ) {
@@ -93,7 +96,38 @@ class BbbApi {
 
             req.write( body );
             req.end();
-        });
+        })
+        .then( this.processResponse.bind( this ) );
+    }
+
+    processResponse( { headers, statusCode, body } ) {
+        /* handle unexpected 302 redirects (returned by failed join, even with redirect=false)
+         * see: https://github.com/bigbluebutton/bigbluebutton/issues/9749
+         * */
+        if( body === "" && statusCode == 302 ) {
+            const errors = JSON.parse( decodeURIComponent( headers.location.substring( headers.location.indexOf("[") ) ) );
+            const err = new Error( errors[0].message );
+            err.messageKey = errors[0].key;
+            err.returnCode = 'FAILED';
+            throw err;
+        }
+
+        const xml = xmlParser.parse( body ).response;
+
+        if( xml.returncode != "SUCCESS" ) {
+            const err = new Error( xml.message )
+            err.messageKey = xml.messageKey;
+            err.returnCode = xml.returncode;
+            throw err;
+        }
+
+
+        return {
+            headers,
+            statusCode,
+            body,
+            xml,
+        }
     }
 
     create( params ) {
@@ -113,15 +147,41 @@ class BbbApi {
                 ${documents}
             </module>
         </modules>`;
-        this.post( url, body );
+        return this.post( url, body );
     }
 
     join( params ) {
-        return this.callUrl( "join", params );
+        return this.callUrl( "join", params )
+        .then( res => {
+            res.join = {
+                url: res.xml.url,
+                cookie: res.headers['set-cookie'],
+            };
+            return res;
+        });
     }
 
     getMeetings() {
-        return this.callUrl( "getMeetings" );
+        return this.callUrl( "getMeetings" )
+        /* get proper array when no meetings/attendees are available */
+        .then( res => {
+            if( res.xml.messageKey == 'noMeetings' )
+                res.meetings = [];
+            else {
+                var meetings = Object.assign( {}, res.xml.meetings );
+                if( meetings.meeting instanceof Array )
+                    meetings = meetings.meeting;
+                else
+                    meetings = [ meetings.meeting ]
+
+                for( const meeting of meetings )
+                    if( meeting.attendees === "" )
+                        meeting.attendees = [];
+
+                res.meetings = meetings;
+            }
+            return res;
+        });
     }
 
     getMeetingInfo( params ) {
@@ -134,6 +194,24 @@ class BbbApi {
 
     end( params ) {
         return this.callUrl( "end", params );
+    }
+
+    /* api extensions */
+    joinPersitantRoom( joinOpts, createOpts, slides = [] ) {
+        return this.join( joinOpts )
+        .catch( err => {
+            if( err.messageKey != "invalidMeetingIdentifier" )
+                throw err;
+
+            let creator;
+            if( slides.length > 0 )
+                creator = this.create( createOpts );
+            else
+                creator = this.createWithSlides( createOpts, slides );
+
+            return creator
+            .then( () => this.join( joinOpts ) );
+        });
     }
 }
 
