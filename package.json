@@ -1,0 +1,24 @@
+{
+  "name": "bbb-rooms",
+  "version": "0.1.0",
+  "description": "bigbluebutton promise api with simple persistant rooms",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GeraldWodni/bbb-rooms.git"
+  },
+  "keywords": [
+    "bigbluebutton",
+    "bbb",
+    "api"
+  ],
+  "author": "Gerald Wodni <gerald.wodni@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GeraldWodni/bbb-rooms/issues"
+  },
+  "homepage": "https://github.com/GeraldWodni/bbb-rooms#readme"
+}
