@@ -102,10 +102,11 @@ class BbbApi {
 
     createWithSlides( params, slides ) {
         const url = this.getCallUrl( "create", params );
+
         var documents = "";
-        for( const slide in slides ) {
+        for( const slide of slides )
             documents+=`<document url="${slide.url}" filename="${slide.filename}"/>`
-        }
+
         const body = `<?xml version="1.0"?>
         <modules>
             <module name="presentation">
