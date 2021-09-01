@@ -9,6 +9,9 @@ Hint: there are no persistant rooms, once a conference is idle bbb will close it
 ### joinPersitantRoom( joinOpts, createOpts )
 Note: the options are kept separate intentionally. That way this module is much more future proof.
 
+Creates the room (idempotent operation), then join.
+Session cookie returned as `res.join.cookie` (needs to be set before using URL!)
+
 ```js
 const BbbApi = require("bbb-rooms");
 const bbbApi = new BbbApi( "bbb.example.com", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" );
@@ -23,7 +26,31 @@ bbb.joinPersitantRoom( {
     attendeePW: "oneone",
     moderatorPW: "twotwo",
     freeJoin: true,
-});
+})
+.then( res => console.log( res.join ) )
+.catch( err => console.log( "OH NOES:", err ) );
+```
+
+### joinPersitantRoomUrl( joinOpts, createOpts )
+Like joinPersitantRoom but used for cases where the session cookie cannot be set i.e. cross domain requests.
+
+Creates the room (idempotent operation), then generates join url.
+
+```js
+bbb.joinPersitantRoomUrl( {
+    meetingID: "euroforth",
+    fullName: "Gerald Wodni",
+    password: "oneone",
+    redirect: true, // here we do want bbb to redirect the user to the proper session
+}, {
+    name: "EuroForth",
+    meetingID: "euroforth",
+    attendeePW: "oneone",
+    moderatorPW: "twotwo",
+    freeJoin: true,
+})
+.then( res => console.log( res.join ) )
+.catch( err => console.log( "OH NOES:", err ) );
 ```
 
 ## Standard API (promisified)

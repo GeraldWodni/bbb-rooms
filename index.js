@@ -150,6 +150,13 @@ class BbbApi {
         return this.post( url, body );
     }
 
+    createWithOptionalSlides( params, slides = [] ) {
+        if( slides.length == 0 )
+            return this.create( params );
+        else
+            return this.createWithSlides( params, slides );
+    }
+
     join( params ) {
         return this.callUrl( "join", params )
         .then( res => {
@@ -198,20 +205,15 @@ class BbbApi {
 
     /* api extensions */
     joinPersitantRoom( joinOpts, createOpts, slides = [] ) {
-        return this.join( joinOpts )
-        .catch( err => {
-            if( err.messageKey != "invalidMeetingIdentifier" )
-                throw err;
+        return this.createWithOptionalSlides( createOpts, slides )
+        .then( () => this.join( joinOpts ) );
+    }
 
-            let creator;
-            if( slides.length > 0 )
-                creator = this.create( createOpts );
-            else
-                creator = this.createWithSlides( createOpts, slides );
-
-            return creator
-            .then( () => this.join( joinOpts ) );
-        });
+    joinPersitantRoomUrl( joinOpts, createOpts, slides = [] ) {
+        return this.createWithOptionalSlides( createOpts, slides )
+        .then( () => { return {
+            join: this.getCallUrl( "join", joinOpts ),
+        } });
     }
 }
 
