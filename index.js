@@ -181,9 +181,14 @@ class BbbApi {
                 else
                     meetings = [ meetings.meeting ]
 
-                for( const meeting of meetings )
+                for( const meeting of meetings ) {
                     if( meeting.attendees === "" )
                         meeting.attendees = [];
+                    else if( meeting.attendees.attendee instanceof Array )
+                        meeting.attendees = meeting.attendees.attendee;
+                    else
+                        meeting.attendees = [ meeting.attendees.attendee ];
+                }
 
                 res.meetings = meetings;
             }
